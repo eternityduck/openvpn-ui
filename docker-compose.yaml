@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  openvpn:
+    build:
+      context: .
+      dockerfile: Dockerfile.openvpn
+    image: openvpn:test
+    command: /etc/openvpn/setup/bootstrap.sh
+    environment:
+      OPENVPN_SERVER_NET: "192.168.100.0"
+      OPENVPN_SERVER_MASK: "255.255.255.0"
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 8000:1194
+      - 8080:8080
+    volumes:
+      - ./easyrsa:/etc/openvpn/easyrsa
+      - ./ccd:/etc/openvpn/ccd
+  openvpn-ui:
+    build:
+      context: ./openvpn-ui
+    image: openvpn-ui:test
+    network_mode: service:openvpn
+    volumes:
+      - ./easyrsa:/opt/easyrsa
+      - ./ccd:/opt/ccd
