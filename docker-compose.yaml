@@ -20,9 +20,13 @@ services:
       - ./ccd:/etc/openvpn/ccd
   openvpn-ui:
     build:
-      context: ./openvpn-ui
+      context: ./openvpn-ui-fast-api
     image: openvpn-ui:test
     network_mode: service:openvpn
+    command: python3 /app/main.py
+    environment:
+      OPENVPN_EASYRSA_PATH: "/opt/easyrsa"
+      OPENVPN_INDEX_TXT_PATH: "/opt/easyrsa/pki/index.txt"
     volumes:
       - ./easyrsa:/opt/easyrsa
       - ./ccd:/opt/ccd

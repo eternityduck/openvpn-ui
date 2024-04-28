@@ -2,3 +2,4 @@
 .venv
 easyrsa
 ccd
+__pycache__
