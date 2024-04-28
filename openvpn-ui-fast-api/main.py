@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from utils.utils import parse_index_txt
+from fastapi.responses import FileResponse, StreamingResponse
 from config import (OPENVPN_INDEX_TXT_PATH, APP_HOST, APP_PORT)
 from services.open_vpn_service import OpenVPNService
 from models.user import User
@@ -8,15 +8,17 @@ app = FastAPI()
 openvpnService = OpenVPNService()
 
 
-# @app.get("/")
-# async def root():
-#
-#     return {"message": result}
+@app.get("/")
+async def root():
+    generated_config = openvpnService.generate_config("test1")
+    return {"message": "result"}
 
 
 @app.get("/download/{username}")
-async def download_config(name: str):
-    return {"message": f"Hello {name}"}
+async def download_config(username: str):
+    file = openvpnService.download_config(username)
+    return StreamingResponse(iter([file.getvalue()]), media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={username}.ovpn"})
+    # return FileResponse(file.getvalue(), filename=f"{username}.ovpn")
 
 
 @app.post("/user")

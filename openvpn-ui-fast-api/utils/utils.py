@@ -1,3 +1,6 @@
+from jinja2 import Environment, FileSystemLoader
+
+
 def parse_index_txt(index_txt: str) -> list:
     """
     Parse the index.txt file and return a list with the data
@@ -40,4 +43,14 @@ def validate_username(username: str) -> bool:
     """
     Validate the username
     """
-    return True if len(username) > 0 and len(username) < 30 else False
+    return True if 0 < len(username) < 30 else False
+
+
+def jinja_render(obj: dict, **kwargs) -> str:
+    """
+    Render a Jinja template
+    """
+    env = Environment(loader=FileSystemLoader('templates'))
+    template = env.get_template('client.conf.j2')
+
+    return template.render(**obj)
