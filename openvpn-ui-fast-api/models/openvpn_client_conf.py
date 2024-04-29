@@ -1,7 +1,7 @@
 from models.open_vpn_server import OpenVPNServer
 
 
-class OpenClientConf:
+class OpenVPNClientConf:
     server: OpenVPNServer
     cert: str
     key: str

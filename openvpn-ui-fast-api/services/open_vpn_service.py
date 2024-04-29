@@ -12,7 +12,7 @@ import json
 
 
 from models.open_vpn_server import OpenVPNServer
-from models.openvpn_client_conf import OpenClientConf
+from models.openvpn_client_conf import OpenVPNClientConf
 from utils.utils import (parse_index_txt, file_reader, jinja_render)
 
 
@@ -45,7 +45,7 @@ class OpenVPNService:
     def generate_config(self, username) -> (bool, str):
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
-        openvpn_client_conf = OpenClientConf()
+        openvpn_client_conf = OpenVPNClientConf()
         openvpn_client_conf.server = OpenVPNServer(host=OPENVPN_LISTEN_HOST, port=OPENVPN_LISTEN_PORT, protocol=OPENVPN_PROTOCOL)
         openvpn_client_conf.ca = file_reader(f"{OPENVPN_EASYRSA_PATH}/pki/ca.crt")
         openvpn_client_conf.tls = file_reader(f"{OPENVPN_EASYRSA_PATH}/pki/ta.key")
@@ -56,7 +56,10 @@ class OpenVPNService:
 
         return jinja_render(obj_dict)
 
-
+    def users_list(self):
+        file = file_reader(OPENVPN_INDEX_TXT_PATH)
+        data = parse_index_txt(file)
+        return data
 
 
     # def download_config(self, username):
