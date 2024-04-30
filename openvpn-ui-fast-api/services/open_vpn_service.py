@@ -9,11 +9,12 @@ from config import (
 )
 import subprocess
 import json
+import shutil
 
 
 from models.open_vpn_server import OpenVPNServer
 from models.openvpn_client_conf import OpenVPNClientConf
-from utils.utils import (parse_index_txt, file_reader, jinja_render)
+from utils.utils import (parse_index_txt, file_reader, jinja_render, fix_crl_connections)
 
 
 class OpenVPNService:
@@ -25,12 +26,35 @@ class OpenVPNService:
         #TODO validate username
         subprocess.run(f'cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch build-client-full {username} nopass', shell=True, check=True, text=True)
 
-
-
-
         return True, f"User {username} created"
 
+    def revoke_user(self, username) -> (bool, str):
+        if not self.check_user_exist(username):
+            return False, f"User {username} does not exist"
 
+        revoke_command = f'cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch revoke {username}'
+        subprocess.run(revoke_command, shell=True, check=True, text=True)
+
+        gen_crl_command = f'cd {OPENVPN_EASYRSA_PATH} && easyrsa gen-crl'
+        subprocess.run(gen_crl_command, shell=True, check=True, text=True)
+
+        fix_crl_connections(OPENVPN_EASYRSA_PATH)
+
+        return True, f"User {username} revoked"
+
+    def unrevoke_user(self, username):
+        if not self.check_user_exist(username):
+            return False, f"User {username} does not exist"
+
+        shutil.move(f"{OPENVPN_EASYRSA_PATH}/pki/revoked/private_by_serial/{username}.key", f"{OPENVPN_EASYRSA_PATH}/pki/private/{username}.key")
+        subprocess.run(revoke_command, shell=True, check=True, text=True)
+
+        gen_crl_command = f'cd {OPENVPN_EASYRSA_PATH} && easyrsa gen-crl'
+        subprocess.run(gen_crl_command, shell=True, check=True, text=True)
+
+        fix_crl_connections(OPENVPN_EASYRSA_PATH)
+
+        return True, f"User {username} un-revoked"
 
 
     @staticmethod

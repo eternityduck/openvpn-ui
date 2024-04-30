@@ -10,8 +10,7 @@ openvpnService = OpenVPNService()
 
 @app.get("/")
 async def root():
-    generated_config = openvpnService.generate_config("test1")
-    return {"message": "result"}
+    return {"message": openvpnService.users_list()}
 
 
 @app.get("/download/{username}")
@@ -25,6 +24,12 @@ async def download_config(username: str):
 async def create_user(user: User):
     openvpnService.create_user(user.username)
     return {"message": f"Created user {user.username}"}
+
+
+@app.get("/revoke/{username}")
+async def revoke_user(username: str):
+    openvpnService.revoke_user(username)
+    return {"message": f"Revoked user {username}"}
 
 
 if __name__ == "__main__":
