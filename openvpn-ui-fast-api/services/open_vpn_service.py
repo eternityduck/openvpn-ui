@@ -5,11 +5,13 @@ from config import (
     OPENVPN_EASYRSA_PATH,
     OPENVPN_LISTEN_HOST,
     OPENVPN_LISTEN_PORT,
-    OPENVPN_PROTOCOL
+    OPENVPN_PROTOCOL,
+    OPENVPN_CCD_PATH
 )
 import subprocess
 import json
 import shutil
+import os
 
 
 from models.open_vpn_server import OpenVPNServer
@@ -115,25 +117,64 @@ class OpenVPNService:
         buffer.seek(0)
         return buffer
 
+    @staticmethod
+    def check_group_exist(groupname) -> bool:
+        path = f"{OPENVPN_CCD_PATH}/groups/{groupname}"
+        return os.path.exists(path)
 
-    def create_group(self, groupname):
-        # TODO
+    def groups_list(self) -> list:
+        groups = []
+        for group in os.listdir(f"{OPENVPN_CCD_PATH}/groups"):
+            groups.append(group)
+        return groups
+
+    def create_group(self, groupname) -> (bool, str):
+        if self.check_group_exist(groupname):
+            return False, f"Group {groupname} already exists"
+
+        os.makedirs(f"{OPENVPN_CCD_PATH}/groups", exist_ok=True)
+
+        group_file_path = f"{OPENVPN_CCD_PATH}/groups/{groupname}"
+        with open(group_file_path, 'w') as group_file:
+            group_file.close()
 
         return True, f"Group {groupname} created"
 
     def delete_group(self, groupname):
-        # TODO
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+
+        group_file_path = f"{OPENVPN_CCD_PATH}/groups/{groupname}"
+        os.remove(group_file_path)
+
         return True, f"Group {groupname} deleted"
 
-    def add_user_group(self, username, groupname):
-        # TODO
+    def add_user_to_group(self, username, groupname):
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+        if not self.check_user_exist(username):
+            return False, f"User {username} does not exist"
+
+        with open(f"{OPENVPN_CCD_PATH}/{username}", 'w') as user_file:
+            user_file.write(f"config {OPENVPN_CCD_PATH}/groups/{groupname}")
+
         return True, f"User {username} added to group {groupname}"
 
-    def add_routes_group(self, groupname, routes):
-        # TODO
+    def add_routes_to_group(self, groupname, routes):
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+        #TODO
         return True, f"Route {routes} added to group {groupname}"
 
-    def remove_user_group(self, username, groupname):
+    def remove_routes_from_group(self, groupname, routes):
         # TODO
+        return True, f"Route {routes} removed from group {groupname}"
+
+    def remove_user_from_group(self, username, groupname):
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+        if not self.check_user_exist(username):
+            return False, f"User {username} does not exist"
+
         return True, f"User {username} removed from group {groupname}"
 

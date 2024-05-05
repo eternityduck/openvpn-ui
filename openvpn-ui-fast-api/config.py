@@ -4,7 +4,7 @@ import os
 def try_parse_int(value: str):
     try:
         return int(value)
-    except ValueError:
+    except TypeError:
         return None
 
 
@@ -17,3 +17,4 @@ APP_PORT = try_parse_int(os.getenv('APP_PORT')) or 8080
 OPENVPN_LISTEN_HOST = os.getenv('OPENVPN_LISTEN_HOST') or '127.0.0.1'
 OPENVPN_LISTEN_PORT = try_parse_int(os.getenv('OPENVPN_LISTEN_PORT')) or 1194
 OPENVPN_PROTOCOL = os.getenv('OPENVPN_PROTOCOL') or 'tcp'
+OPENVPN_CCD_PATH = os.getenv('OPENVPN_CCD_PATH') or '../ccd'

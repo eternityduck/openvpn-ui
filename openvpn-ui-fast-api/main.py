@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from config import (OPENVPN_INDEX_TXT_PATH, APP_HOST, APP_PORT)
 from services.open_vpn_service import OpenVPNService
 from models.user import User
+from models.group import Group
 
 app = FastAPI()
 openvpnService = OpenVPNService()
@@ -22,8 +23,8 @@ async def download_config(username: str):
 
 @app.post("/user")
 async def create_user(user: User):
-    openvpnService.create_user(user.username)
-    return {"message": f"Created user {user.username}"}
+    result = openvpnService.create_user(user.username)
+    return {"message": result[1]}
 
 
 @app.get("/revoke/{username}")
@@ -39,27 +40,32 @@ async def ratify_user(username: str):
 
 
 @app.post("/group")
-async def create_group(group: str):
-    openvpnService.create_group(group)
-    return {"message": f"Created group {group}"}
+async def create_group(group: Group):
+    result = openvpnService.create_group(group.name)
+    return {"message": result[1]}
+
 
 @app.get("/group")
 async def groups_list():
-    # TODO
-    pass
-    return {"message": openvpnService.groups_list()}
+    return {"result": openvpnService.groups_list()}
 
 
-@app.post("/group/{groupname}/user/{username}")
-async def add_user_group(username: str, groupname: str):
-    openvpnService.add_user_group(username, groupname)
-    return {"message": f"User {username} added to group {groupname}"}
+@app.get("/group/{groupname}/user/{username}")
+async def add_user_to_group(username: str, groupname: str):
+    result = openvpnService.add_user_to_group(username, groupname)
+    return {"message": result[1]}
 
 
-@app.post("/group/{groupname}/routes")
-async def add_routes_group(groupname: str, routes: list):
-    openvpnService.add_routes_group(groupname, routes)
-    return {"message": f"Route {routes} added to group {groupname}"}
+@app.delete("/group/{groupname}")
+async def delete_group(groupname: str):
+    result = openvpnService.delete_group(groupname)
+    return {"message": result[1]}
+
+
+# @app.post("/group/{groupname}/routes")
+# async def add_routes_group(groupname: str, routes: list):
+#     openvpnService.add_routes_group(groupname, routes)
+#     return {"message": f"Route {routes} added to group {groupname}"}
 
 
 if __name__ == "__main__":

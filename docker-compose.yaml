@@ -27,6 +27,7 @@ services:
     environment:
       OPENVPN_EASYRSA_PATH: "/opt/easyrsa"
       OPENVPN_INDEX_TXT_PATH: "/opt/easyrsa/pki/index.txt"
+      OPENVPN_CCD_PATH: "/opt/ccd"
       OPENVPN_LISTEN_HOST: '127.0.0.1'
       OPENVPN_LISTEN_PORT: 8000
     volumes:
