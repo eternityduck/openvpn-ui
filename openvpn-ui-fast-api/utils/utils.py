@@ -1,5 +1,8 @@
-from jinja2 import Environment, FileSystemLoader
+import re
 import subprocess
+
+from jinja2 import Environment, FileSystemLoader
+
 
 def parse_index_txt(index_txt: str) -> list:
     """
@@ -30,6 +33,18 @@ def parse_index_txt(index_txt: str) -> list:
                 })
     return data
 
+def generate_index_txt(data: list) -> str:
+    """
+    Generate the index.txt file content
+    """
+    index_txt = ""
+    for user in data:
+        if user['flag'] == "V":
+            index_txt += f"{user['flag']}\t{user['expiration_date']}\t\t{user['serial_number']}\t{user['file_name']}\t{user['subject_name']}\n"
+        elif user['flag'] == "R":
+            index_txt += f"{user['flag']}\t{user['expiration_date']}\t{user['revocation_date']}\t{user['serial_number']}\t{user['file_name']}\t{user['subject_name']}\n"
+    return index_txt
+
 
 def file_reader(file_path: str) -> str:
     """
@@ -39,11 +54,20 @@ def file_reader(file_path: str) -> str:
         return f.read()
 
 
+def file_writer(file_path: str, content: str):
+    """
+    Write a file
+    """
+    with open(file_path, "w") as f:
+        f.write(content)
+
+
 def validate_username(username: str) -> bool:
     """
     Validate the username
     """
-    return True if 0 < len(username) < 30 else False
+    regex = re.compile(r'^[a-zA-Z0-9]*$')
+    return True if 0 < len(username) < 40 else False
 
 
 def jinja_render(obj: dict, **kwargs) -> str:

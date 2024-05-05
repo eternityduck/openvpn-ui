@@ -14,7 +14,7 @@ import shutil
 
 from models.open_vpn_server import OpenVPNServer
 from models.openvpn_client_conf import OpenVPNClientConf
-from utils.utils import (parse_index_txt, file_reader, jinja_render, fix_crl_connections)
+from utils.utils import (parse_index_txt, file_reader, jinja_render, fix_crl_connections, file_writer, generate_index_txt)
 
 
 class OpenVPNService:
@@ -42,19 +42,37 @@ class OpenVPNService:
 
         return True, f"User {username} revoked"
 
-    def unrevoke_user(self, username):
+    def ratify_user(self, username) -> (bool, str):
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
+        index_file = file_reader(OPENVPN_INDEX_TXT_PATH)
+        index_data = parse_index_txt(index_file)
+        for i in range(len(index_data)):
+            if index_data[i]['id'] == username:
+                if index_data[i]['flag'] == "R":
+                    user_serial = index_data[i]['serial_number']
+                    shutil.move(f"{OPENVPN_EASYRSA_PATH}/pki/revoked/private_by_serial/{user_serial}.key", f"{OPENVPN_EASYRSA_PATH}/pki/private/{username}.key")
+                    shutil.copy2(f"{OPENVPN_EASYRSA_PATH}/pki/revoked/certs_by_serial/{user_serial}.crt", f"{OPENVPN_EASYRSA_PATH}/pki/issued/{username}.crt")
+                    shutil.move(f"{OPENVPN_EASYRSA_PATH}/pki/revoked/certs_by_serial/{user_serial}.crt", f"{OPENVPN_EASYRSA_PATH}/pki/certs_by_serial/{user_serial}.pem")
+                    shutil.move(f"{OPENVPN_EASYRSA_PATH}/pki/revoked/reqs_by_serial/{user_serial}.req", f"{OPENVPN_EASYRSA_PATH}/pki/reqs/{username}.req")
 
-        shutil.move(f"{OPENVPN_EASYRSA_PATH}/pki/revoked/private_by_serial/{username}.key", f"{OPENVPN_EASYRSA_PATH}/pki/private/{username}.key")
-        subprocess.run(revoke_command, shell=True, check=True, text=True)
+                    index_data[i]['flag'] = "V"
+                    index_data[i]['revocation_date'] = ""
 
-        gen_crl_command = f'cd {OPENVPN_EASYRSA_PATH} && easyrsa gen-crl'
-        subprocess.run(gen_crl_command, shell=True, check=True, text=True)
+                    file_writer(OPENVPN_INDEX_TXT_PATH, generate_index_txt(index_data))
 
-        fix_crl_connections(OPENVPN_EASYRSA_PATH)
+                    gen_crl_command = f'cd {OPENVPN_EASYRSA_PATH} && easyrsa gen-crl'
+                    subprocess.run(gen_crl_command, shell=True, check=True, text=True)
 
-        return True, f"User {username} un-revoked"
+                    fix_crl_connections(OPENVPN_EASYRSA_PATH)
+                else:
+                    return False, f"User {username} is not revoked"
+
+        return True, f"User {username} ratified(un-revoked)"
+
+    def delete_user(self, username) -> (bool, str):
+        #TODO
+        pass
 
 
     @staticmethod
@@ -96,3 +114,26 @@ class OpenVPNService:
         buffer.write(config)
         buffer.seek(0)
         return buffer
+
+
+    def create_group(self, groupname):
+        # TODO
+
+        return True, f"Group {groupname} created"
+
+    def delete_group(self, groupname):
+        # TODO
+        return True, f"Group {groupname} deleted"
+
+    def add_user_group(self, username, groupname):
+        # TODO
+        return True, f"User {username} added to group {groupname}"
+
+    def add_routes_group(self, groupname, routes):
+        # TODO
+        return True, f"Route {routes} added to group {groupname}"
+
+    def remove_user_group(self, username, groupname):
+        # TODO
+        return True, f"User {username} removed from group {groupname}"
+

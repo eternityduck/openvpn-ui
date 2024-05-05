@@ -4,7 +4,7 @@ import os
 def try_parse_int(value: str):
     try:
         return int(value)
-    except Exception:
+    except ValueError:
         return None
 
 

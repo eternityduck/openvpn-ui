@@ -32,6 +32,36 @@ async def revoke_user(username: str):
     return {"message": f"Revoked user {username}"}
 
 
+@app.get("/ratify/{username}")
+async def ratify_user(username: str):
+    openvpnService.ratify_user(username)
+    return {"message": f"Ratified user {username}"}
+
+
+@app.post("/group")
+async def create_group(group: str):
+    openvpnService.create_group(group)
+    return {"message": f"Created group {group}"}
+
+@app.get("/group")
+async def groups_list():
+    # TODO
+    pass
+    return {"message": openvpnService.groups_list()}
+
+
+@app.post("/group/{groupname}/user/{username}")
+async def add_user_group(username: str, groupname: str):
+    openvpnService.add_user_group(username, groupname)
+    return {"message": f"User {username} added to group {groupname}"}
+
+
+@app.post("/group/{groupname}/routes")
+async def add_routes_group(groupname: str, routes: list):
+    openvpnService.add_routes_group(groupname, routes)
+    return {"message": f"Route {routes} added to group {groupname}"}
+
+
 if __name__ == "__main__":
     import uvicorn
 

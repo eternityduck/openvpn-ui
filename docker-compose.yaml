@@ -13,8 +13,8 @@ services:
     cap_add:
       - NET_ADMIN
     ports:
-      - 8000:1194
-      - 8080:8080
+      - "8000:1194"
+      - "8080:8080"
     volumes:
       - ./easyrsa:/etc/openvpn/easyrsa
       - ./ccd:/etc/openvpn/ccd
