@@ -1,6 +1,8 @@
+from typing import List
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
-from config import (OPENVPN_INDEX_TXT_PATH, APP_HOST, APP_PORT)
+from config import (APP_HOST, APP_PORT)
 from services.open_vpn_service import OpenVPNService
 from models.user import User
 from models.group import Group
@@ -56,16 +58,22 @@ async def add_user_to_group(username: str, groupname: str):
     return {"message": result[1]}
 
 
+@app.delete("/group/{groupname}/user/{username}")
+async def add_user_to_group(username: str, groupname: str):
+    result = openvpnService.remove_user_from_group(username, groupname)
+    return {"message": result[1]}
+
+
 @app.delete("/group/{groupname}")
 async def delete_group(groupname: str):
     result = openvpnService.delete_group(groupname)
     return {"message": result[1]}
 
 
-# @app.post("/group/{groupname}/routes")
-# async def add_routes_group(groupname: str, routes: list):
-#     openvpnService.add_routes_group(groupname, routes)
-#     return {"message": f"Route {routes} added to group {groupname}"}
+@app.post("/group/{groupname}/routes")
+async def add_routes_group(groupname: str, group: Group):
+    openvpnService.add_routes_to_group(groupname, group.routes)
+    return {"message": ""}
 
 
 if __name__ == "__main__":

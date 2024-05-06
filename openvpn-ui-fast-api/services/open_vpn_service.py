@@ -155,8 +155,8 @@ class OpenVPNService:
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
 
-        with open(f"{OPENVPN_CCD_PATH}/{username}", 'w') as user_file:
-            user_file.write(f"config {OPENVPN_CCD_PATH}/groups/{groupname}")
+        with open(f"{OPENVPN_CCD_PATH}/{username}", 'a') as user_file:
+            user_file.write(f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n")
 
         return True, f"User {username} added to group {groupname}"
 
@@ -176,5 +176,18 @@ class OpenVPNService:
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
 
-        return True, f"User {username} removed from group {groupname}"
+        line_to_remove = f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n"
 
+        with open(f"{OPENVPN_CCD_PATH}/{username}", 'r') as user_file:
+            lines = user_file.readlines()
+
+        if line_to_remove in lines:
+            lines.remove(line_to_remove)
+
+            # Write the updated content back to the file
+            with open(f"{OPENVPN_CCD_PATH}/{username}", 'w') as user_file:
+                user_file.writelines(lines)
+
+            return True, f"User {username} removed from group {groupname}"
+        else:
+            return False, f"User {username} is not a member of group {groupname}"

@@ -4,5 +4,5 @@ from pydantic import BaseModel
 
 
 class Group(BaseModel):
-    name: str
+    name: Optional[str] = None
     routes: Optional[List[str]] = None
