@@ -33,6 +33,47 @@ def parse_index_txt(index_txt: str) -> list:
                 })
     return data
 
+def parse_mgmt_users(users_text: str) -> list:
+    """
+    Parse the management users
+    """
+    users = []
+    is_client_list = False
+    is_route_table = False
+    lines = users_text.split("\n")
+    for line in lines:
+        if re.match(r'^Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since$', line):
+            is_client_list = True
+            continue
+        if re.match(r'^ROUTING TABLE$', line):
+            is_client_list = False
+            continue
+        if re.match(r'^Virtual Address,Common Name,Real Address,Last Ref$', line):
+            is_route_table = True
+            continue
+        if re.match(r'^GLOBAL STATS$', line):
+            break
+        if is_client_list:
+            user_data = line.split(",")
+            user_status = {
+                "CommonName": user_data[0],
+                "RealAddress": user_data[1],
+                "BytesReceived": user_data[2],
+                "BytesSent": user_data[3],
+                "ConnectedSince": user_data[4],
+                "ConnectedTo": server_name
+            }
+            users.append(user_status)
+        if is_route_table:
+            route_data = line.split(",")
+            for user in users:
+                if user["CommonName"] == route_data[1]:
+                    user["VirtualAddress"] = route_data[0]
+                    user["LastRef"] = route_data[3]
+                    break
+    return users
+
+
 def generate_index_txt(data: list) -> str:
     """
     Generate the index.txt file content
@@ -80,9 +121,9 @@ def jinja_render(obj: dict, **kwargs) -> str:
     return template.render(**obj)
 
 
-def fix_crl_connections(earysa_path: str):
+def fix_crl_connections(easyrsa_path: str):
     """
     Fix the CRL connections https://community.openvpn.net/openvpn/ticket/623
     """
-    subprocess.run(f'chmod 0644 {earysa_path}/pki/crl.pem', shell=True, check=True, text=True)
-    subprocess.run(f'chmod 0755 {earysa_path}/pki', shell=True, check=True, text=True)
+    subprocess.run(f'chmod 0644 {easyrsa_path}/pki/crl.pem', shell=True, check=True, text=True)
+    subprocess.run(f'chmod 0755 {easyrsa_path}/pki', shell=True, check=True, text=True)

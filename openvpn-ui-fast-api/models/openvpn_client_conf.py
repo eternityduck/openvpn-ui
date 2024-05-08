@@ -7,3 +7,4 @@ class OpenVPNClientConf:
     key: str
     ca: str
     tls: str
+    pass_auth: bool

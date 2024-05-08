@@ -72,8 +72,14 @@ async def delete_group(groupname: str):
 
 @app.post("/group/{groupname}/routes")
 async def add_routes_group(groupname: str, group: Group):
-    openvpnService.add_routes_to_group(groupname, group.routes)
-    return {"message": ""}
+    result = openvpnService.add_routes_to_group(groupname, group.routes)
+    return {"message": result[1]}
+
+
+@app.delete("/group/{groupname}/routes")
+async def delete_routes_group(groupname: str, group: Group):
+    result = openvpnService.remove_routes_from_group(groupname, group.routes)
+    return {"message": result[1]}
 
 
 if __name__ == "__main__":

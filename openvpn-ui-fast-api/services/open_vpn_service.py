@@ -163,11 +163,29 @@ class OpenVPNService:
     def add_routes_to_group(self, groupname, routes):
         if not self.check_group_exist(groupname):
             return False, f"Group {groupname} does not exist"
-        #TODO
-        return True, f"Route {routes} added to group {groupname}"
+
+        routes_str = ""
+        for route in routes:
+            routes_str += f"push \"route {route}\"\n"
+        with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", 'a') as group_file:
+            group_file.write(routes_str)
+
+        return True, f"Routes {routes} added to group {groupname}"
 
     def remove_routes_from_group(self, groupname, routes):
-        # TODO
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+
+        with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", 'r') as group_file:
+            lines = group_file.readlines()
+
+        for route in routes:
+            route_str = f"push \"route {route}\"\n"
+            lines = [line for line in lines if line != route_str]
+
+        with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", 'w') as group_file:
+            group_file.writelines(lines)
+
         return True, f"Route {routes} removed from group {groupname}"
 
     def remove_user_from_group(self, username, groupname):
@@ -184,7 +202,6 @@ class OpenVPNService:
         if line_to_remove in lines:
             lines.remove(line_to_remove)
 
-            # Write the updated content back to the file
             with open(f"{OPENVPN_CCD_PATH}/{username}", 'w') as user_file:
                 user_file.writelines(lines)
 
