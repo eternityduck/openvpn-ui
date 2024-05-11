@@ -1,25 +1,44 @@
+from contextlib import asynccontextmanager
 from typing import List
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
-from config import (APP_HOST, APP_PORT)
+from config import APP_HOST, APP_PORT
+from services.open_vpn_management_service import OpenVpnManagementService
 from services.open_vpn_service import OpenVPNService
 from models.user import User
 from models.group import Group
+from apscheduler.schedulers.background import BackgroundScheduler
+from models.client import Client
 
-app = FastAPI()
-openvpnService = OpenVPNService()
+
+@asynccontextmanager
+async def lifespan(app_fast_api: FastAPI):
+    scheduler = BackgroundScheduler({'apscheduler.job_defaults.max_instances': 2})
+    scheduler.add_job(mgmtService.update_active_clients, "interval", seconds=20)
+    scheduler.start()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+mgmtService = OpenVpnManagementService()
+openvpnService = OpenVPNService(mgmtService)
 
 
 @app.get("/")
-async def root():
-    return {"message": openvpnService.users_list()}
+async def root() -> List[Client]:
+    result = openvpnService.users_list()
+    return result
 
 
 @app.get("/download/{username}")
 async def download_config(username: str):
     file = openvpnService.download_config(username)
-    return StreamingResponse(iter([file.getvalue()]), media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={username}.ovpn"})
+    return StreamingResponse(
+        iter([file.getvalue()]),
+        media_type="text/plain",
+        headers={"Content-Disposition": f"attachment; filename={username}.ovpn"},
+    )
     # return FileResponse(file.getvalue(), filename=f"{username}.ovpn")
 
 
