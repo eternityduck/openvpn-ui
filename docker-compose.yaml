@@ -10,11 +10,12 @@ services:
     environment:
       OPENVPN_SERVER_NET: "192.168.100.0"
       OPENVPN_SERVER_MASK: "255.255.255.0"
+#      OPENVPN_PASSWORD_AUTH: "true"
     cap_add:
       - NET_ADMIN
     ports:
       - "8000:1194"
-      - "8080:8080"
+#      - "8080:8080"
     volumes:
       - ./easyrsa:/etc/openvpn/easyrsa
       - ./ccd:/etc/openvpn/ccd
@@ -22,14 +23,18 @@ services:
     build:
       context: ./openvpn-ui-fast-api
     image: openvpn-ui:test
-    network_mode: service:openvpn
+#    network_mode: service:openvpn
+    ports:
+      - "8080:8080"
     command: python3 /app/main.py
     environment:
       OPENVPN_EASYRSA_PATH: "/opt/easyrsa"
       OPENVPN_INDEX_TXT_PATH: "/opt/easyrsa/pki/index.txt"
       OPENVPN_CCD_PATH: "/opt/ccd"
-      OPENVPN_LISTEN_HOST: '127.0.0.1'
+      OPENVPN_LISTEN_HOST: "127.0.0.1"
       OPENVPN_LISTEN_PORT: 8000
+#      OPENVPN_PASSWORD_AUTH: "true"
     volumes:
       - ./easyrsa:/opt/easyrsa
       - ./ccd:/opt/ccd
+      - ./db:/opt/db

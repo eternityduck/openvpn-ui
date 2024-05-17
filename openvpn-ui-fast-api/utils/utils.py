@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from config import OPENVPN_LISTEN_HOST, OPENVPN_LISTEN_PORT
 from models.openvpn_client import OpenVpnClientStatus
-
+import bcrypt
 
 # TODO add types
 def parse_index_txt(index_txt: str) -> list:
@@ -50,21 +50,20 @@ def parse_mgmt_users(users_text: str) -> List[OpenVpnClientStatus]:
     users: List[OpenVpnClientStatus] = []
     client_list = False
     route_table = False
-    lines = users_text.split("\n")
-    for line in lines:
-        if re.match(
-            r"^Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since", line
-        ):
+
+    for line in users_text.split("\n"):
+        if "Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since" in line:
             client_list = True
             continue
-        if re.match(r"^Virtual Address,Common Name,Real Address,Last Ref", line):
+        if "Virtual Address,Common Name,Real Address,Last Ref" in line:
             route_table = True
             continue
-        if re.match(r"^ROUTING TABLE", line):
+        if "ROUTING TABLE" in line:
             client_list = False
             continue
-        if re.match(r"^GLOBAL STATS", line):
+        if "GLOBAL STATS" in line:
             break
+
         if client_list:
             user_data = line.split(",")
             user_status = OpenVpnClientStatus(
@@ -76,6 +75,7 @@ def parse_mgmt_users(users_text: str) -> List[OpenVpnClientStatus]:
                 connected_to=f"{OPENVPN_LISTEN_HOST}:{OPENVPN_LISTEN_PORT}",
             )
             users.append(user_status)
+
         if route_table:
             route_data = line.split(",")
             for user in users:
@@ -83,13 +83,11 @@ def parse_mgmt_users(users_text: str) -> List[OpenVpnClientStatus]:
                     user.virtual_address = route_data[0]
                     user.last_ref = route_data[3]
                     break
+
     return users
 
 
 def generate_index_txt(data: list) -> str:
-    """
-    Generate the index.txt file content
-    """
     index_txt = ""
     for user in data:
         if user["flag"] == "V":
@@ -135,3 +133,11 @@ def fix_crl_connections(easyrsa_path: str):
         f"chmod 0644 {easyrsa_path}/pki/crl.pem", shell=True, check=True, text=True
     )
     subprocess.run(f"chmod 0755 {easyrsa_path}/pki", shell=True, check=True, text=True)
+
+
+def check_password(password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed_password.encode())
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()

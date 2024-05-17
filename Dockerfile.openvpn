@@ -1,6 +1,7 @@
 FROM alpine:3.16
 
-RUN apk add --update bash openvpn easy-rsa iptables  && \
-    ln -s /usr/share/easy-rsa/easyrsa /usr/local/bin
+RUN apk add --update bash openvpn easy-rsa iptables curl && \
+    ln -s /usr/share/easy-rsa/easyrsa /usr/local/bin && \
+    ln -s /usr/bin/curl /usr/local/bin
 COPY setup/ /etc/openvpn/setup
 RUN chmod +x /etc/openvpn/setup/bootstrap.sh

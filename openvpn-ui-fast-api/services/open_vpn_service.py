@@ -7,7 +7,7 @@ from config import (
     OPENVPN_LISTEN_HOST,
     OPENVPN_LISTEN_PORT,
     OPENVPN_PROTOCOL,
-    OPENVPN_CCD_PATH,
+    OPENVPN_CCD_PATH, OPENVPN_PASSWORD_AUTH,
 )
 import subprocess
 import json
@@ -17,6 +17,8 @@ import os
 from models.client import Client
 from models.open_vpn_server import OpenVPNServer
 from models.openvpn_client_conf import OpenVPNClientConf
+from models.user import User
+from repositories.user_repo import UserRepository
 from services.open_vpn_management_service import OpenVpnManagementService
 from utils.utils import (
     parse_index_txt,
@@ -30,26 +32,32 @@ from utils.utils import (
 
 class OpenVPNService:
 
-    def __init__(self, mgmt_service: OpenVpnManagementService):
+    def __init__(self, mgmt_service: OpenVpnManagementService, user_repo: UserRepository):
         self.mgmt_service = mgmt_service
+        self.user_repo = user_repo
 
-    def create_user(self, username) -> (bool, str):
-        if self.check_user_exist(username):
-            return False, f"User {username} already exists"
+    def create_user(self, user: User) -> (bool, str):
+        if self.check_user_exist(user.username):
+            return False, f"User {user.username} already exists"
 
         # TODO validate username
         subprocess.run(
-            f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch build-client-full {username} nopass",
+            f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch build-client-full {user.username} nopass",
             shell=True,
             check=True,
             text=True,
         )
 
-        return True, f"User {username} created"
+        self.user_repo.create_user(user)
+
+        return True, f"User {user.username} created"
 
     def revoke_user(self, username) -> (bool, str):
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
+
+        if self.user_repo.is_revoked(username):
+            return False, f"User {username} is already revoked"
 
         revoke_command = (
             f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch revoke {username}"
@@ -59,6 +67,8 @@ class OpenVPNService:
         gen_crl_command = f"cd {OPENVPN_EASYRSA_PATH} && easyrsa gen-crl"
         subprocess.run(gen_crl_command, shell=True, check=True, text=True)
         self.mgmt_service.kill_user(username)
+
+        self.user_repo.change_revocation_status(username)
 
         fix_crl_connections(OPENVPN_EASYRSA_PATH)
 
@@ -102,6 +112,7 @@ class OpenVPNService:
                 else:
                     return False, f"User {username} is not revoked"
 
+        self.user_repo.change_revocation_status(username)
         return True, f"User {username} ratified(un-revoked)"
 
     def delete_user(self, username) -> (bool, str):
@@ -134,6 +145,8 @@ class OpenVPNService:
         openvpn_client_conf.cert = file_reader(
             f"{OPENVPN_EASYRSA_PATH}/pki/issued/{username}.crt"
         )
+        if OPENVPN_PASSWORD_AUTH:
+            openvpn_client_conf.pass_auth = True
 
         obj_dict = json.loads(
             json.dumps(openvpn_client_conf, default=lambda o: o.__dict__)
