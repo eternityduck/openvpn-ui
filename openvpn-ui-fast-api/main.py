@@ -14,6 +14,8 @@ from models.group import Group
 from apscheduler.schedulers.background import BackgroundScheduler
 from models.client import Client
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlmodels.user import User as UserModel
 from sqlmodels.group import Group as GroupModel
 from sqlmodels.route import Route as RouteModel
@@ -29,6 +31,14 @@ async def lifespan(app_fast_api: FastAPI):
 dbContext = DbContext()
 app = FastAPI(lifespan=lifespan)
 # app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 mgmtService = OpenVpnManagementService()
 userRepo = UserRepository(dbContext.get_session())
 openvpnService = OpenVPNService(mgmtService, userRepo)
