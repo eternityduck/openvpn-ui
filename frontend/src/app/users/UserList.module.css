@@ -1,0 +1,44 @@
+.createButton {
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.createButton:hover {
+    background-color: #005bb5;
+}
+
+.userTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.userTable th,
+.userTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.userTable th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #f2f2f2;
+}
+
+.userTable tr:hover {
+    background-color: #f1f1f1;
+}
+
+.userTable button {
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.userTable button:hover {
+    background-color: #ddd;
+}
