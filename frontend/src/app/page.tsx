@@ -4,7 +4,7 @@ import { apiService } from '@/api/api';
 import { User } from '@/models/user';
 import styles from './UserList.module.css';
 import ActionButton from '@/app/components/ActionButton';
-import { router } from 'next/client';
+import { useRouter } from 'next/navigation';
 
 const UserListPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -15,6 +15,8 @@ const UserListPage: React.FC = () => {
   const [passwordAuth, setPasswordAuth] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {

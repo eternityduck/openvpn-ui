@@ -6,11 +6,14 @@ from fastapi.responses import Response, StreamingResponse
 
 from config import APP_HOST, APP_PORT
 from db import DbContext
+from repositories.group_repo import GroupRepository
+from repositories.route_repo import RouteRepository
 from repositories.user_repo import UserRepository
 from services.open_vpn_management_service import OpenVpnManagementService
 from services.open_vpn_service import OpenVPNService
 from models.user import User
 from models.group import Group
+from models.route import Route
 from apscheduler.schedulers.background import BackgroundScheduler
 from models.client import Client
 
@@ -23,10 +26,11 @@ from sqlmodels.route import Route as RouteModel
 
 @asynccontextmanager
 async def lifespan(app_fast_api: FastAPI):
-    scheduler = BackgroundScheduler({'apscheduler.job_defaults.max_instances': 2})
+    scheduler = BackgroundScheduler({"apscheduler.job_defaults.max_instances": 2})
     scheduler.add_job(mgmtService.update_active_clients, "interval", seconds=20)
     scheduler.start()
     yield
+
 
 dbContext = DbContext()
 app = FastAPI(lifespan=lifespan)
@@ -41,7 +45,9 @@ app.add_middleware(
 
 mgmtService = OpenVpnManagementService()
 userRepo = UserRepository(dbContext.get_session())
-openvpnService = OpenVPNService(mgmtService, userRepo)
+groupRepo = GroupRepository(dbContext.get_session())
+routeRepo = RouteRepository(dbContext.get_session())
+openvpnService = OpenVPNService(mgmtService, userRepo, groupRepo, routeRepo)
 
 
 @app.get("/")
@@ -73,7 +79,7 @@ async def download_config(username: str):
     # return FileResponse(file.getvalue(), filename=f"{username}.ovpn")
 
 
-@app.post("/user")
+@app.post("/users")
 async def create_user(user: User, response: Response):
     result = openvpnService.create_user(user)
     response.status_code = 201 if result[0] else 400
@@ -94,49 +100,70 @@ async def ratify_user(username: str, response: Response):
     return {"message": result[1]}
 
 
-@app.post("/group")
+@app.post("/groups")
 async def create_group(group: Group, response: Response):
     result = openvpnService.create_group(group.name)
     response.status_code = 201 if result[0] else 400
     return {"message": result[1]}
 
 
-@app.get("/group")
-async def groups_list():
-    return {"result": openvpnService.groups_list()}
+@app.get("/groups")
+async def groups_list() -> List[Group]:
+    return openvpnService.groups_list()
 
 
-@app.get("/group/{groupname}/user/{username}")
+@app.get("/groupsfull")
+async def group_detail() -> List[Group]:
+    result = groupRepo.get_groups_with_routes()
+    groups_dict = {}
+    for group, route in result:
+        if group.id not in groups_dict:
+            groups_dict[group.id] = {"name": group.name, "routes": []}
+        if route is not None:
+            groups_dict[group.id]["routes"].append(
+                Route(address=route.address, mask=route.mask)
+            )
+
+    groups_with_routes = []
+    for group_id, group_data in groups_dict.items():
+        groups_with_routes.append(
+            Group(name=group_data["name"], routes=group_data["routes"])
+        )
+
+    return groups_with_routes
+
+
+@app.get("/groups/{groupname}/users/{username}")
 async def add_user_to_group(username: str, groupname: str, response: Response):
     result = openvpnService.add_user_to_group(username, groupname)
     response.status_code = 200 if result[0] else 404
     return {"message": result[1]}
 
 
-@app.delete("/group/{groupname}/user/{username}")
+@app.delete("/groups/{groupname}/users/{username}")
 async def delete_user_from_group(username: str, groupname: str, response: Response):
     result = openvpnService.remove_user_from_group(username, groupname)
     response.status_code = 200 if result[0] else 404
     return {"message": result[1]}
 
 
-@app.delete("/group/{groupname}")
+@app.delete("/groups/{groupname}")
 async def delete_group(groupname: str, response: Response):
     result = openvpnService.delete_group(groupname)
     response.status_code = 200 if result[0] else 404
     return {"message": result[1]}
 
 
-@app.post("/group/{groupname}/routes")
-async def add_routes_group(groupname: str, group: Group, response: Response):
-    result = openvpnService.add_routes_to_group(groupname, group.routes)
+@app.post("/groups/{groupname}/routes")
+async def add_routes_group(groupname: str, routes: List[Route], response: Response):
+    result = openvpnService.add_routes_to_group(groupname, routes)
     response.status_code = 201 if result[0] else 404
     return {"message": result[1]}
 
 
-@app.delete("/group/{groupname}/routes")
-async def delete_routes_group(groupname: str, group: Group, response: Response):
-    result = openvpnService.remove_routes_from_group(groupname, group.routes)
+@app.delete("/groups/{groupname}/routes")
+async def delete_routes_group(groupname: str, routes: List[Route], response: Response):
+    result = openvpnService.remove_routes_from_group(groupname, routes)
     response.status_code = 200 if result[0] else 404
     return {"message": result[1]}
 

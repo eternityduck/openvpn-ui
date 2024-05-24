@@ -8,6 +8,7 @@ from config import OPENVPN_LISTEN_HOST, OPENVPN_LISTEN_PORT
 from models.openvpn_client import OpenVpnClientStatus
 import bcrypt
 
+
 # TODO add types
 def parse_index_txt(index_txt: str) -> list:
     """

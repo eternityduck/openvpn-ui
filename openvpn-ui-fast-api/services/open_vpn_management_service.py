@@ -17,11 +17,7 @@ class OpenVpnManagementService:
             if not recv_data:
                 break
             out += recv_data.decode()
-            if (
-                "END" in out
-                or "SUCCESS:" in out
-                or "ERROR:" in out
-            ):
+            if "END" in out or "SUCCESS:" in out or "ERROR:" in out:
                 break
         return out
 
