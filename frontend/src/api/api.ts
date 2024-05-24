@@ -1,4 +1,5 @@
 import {User} from "@/models/user";
+import {Group} from "@/models/group";
 
 class ApiService {
     baseURL: string;
@@ -31,20 +32,52 @@ class ApiService {
         return await this.fetch<User>(`/users/${userId}`);
     }
 
-    async createUser(data: Partial<User>): Promise<User> {
-        return await this.fetch<User>('/users', {
-            method: 'POST',
-            body: JSON.stringify(data),
-        });
-    }
-
     async deleteUser(userId: string): Promise<void> {
         await this.fetch<void>(`/users/${userId}`, {
             method: 'DELETE',
         });
     }
 
-    // Add more methods as needed
+    async downloadConfig(username: string): Promise<void> {
+        const response = await fetch(`${this.baseURL}/download/${username}`);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${username}.ovpn`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    async ratifyUser(username: string): Promise<boolean> {
+        const response = await fetch(`${this.baseURL}/ratify/${username}`, {
+            method: 'GET',
+        });
+        return response.ok;
+    }
+
+    async revokeUser(username: string): Promise<boolean> {
+        const response = await fetch(`${this.baseURL}/revoke/${username}`, {
+            method: 'GET',
+        });
+        return response.ok;
+    }
+
+    async createUser(username: string, password?: string): Promise<boolean> {
+        const response = await fetch(`${this.baseURL}/user`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+        return response.ok;
+    }
+
+    async getGroups(): Promise<Group[]> {
+        return await this.fetch<Group[]>('/groups');
+    }
 }
 
 export const apiService = new ApiService('http://127.0.0.1:8080');
