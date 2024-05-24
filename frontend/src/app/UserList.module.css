@@ -1,30 +1,106 @@
-/* app/styles/UserList.module.css */
-
 .container {
     padding: 20px;
+    font-family: Arial, sans-serif;
 }
 
 .createButton {
+    display: inline-block;
     margin-bottom: 20px;
     padding: 10px 20px;
-    background-color: #4caf50;
+    background-color: #007bff;
     color: white;
     border: none;
+    border-radius: 5px;
     cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.createUserForm {
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.createUserForm h2 {
+    margin-top: 0;
+}
+
+.createUserForm input {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.createUserForm button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.createUserForm button:first-of-type {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.createUserForm button:last-of-type {
+    background-color: #f44336;
+    color: white;
+}
+
+.createUserForm button:first-of-type:hover {
+    background-color: #45a049;
+}
+
+.createUserForm button:last-of-type:hover {
+    background-color: #e53935;
+}
+
+.errorMessage {
+    color: #f44336;
+    background-color: #fdd;
+    padding: 10px;
+    border: 1px solid #f44336;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.successMessage {
+    color: #4CAF50;
+    background-color: #dff0d8;
+    padding: 10px;
+    border: 1px solid #4CAF50;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.createButton:hover {
+    background-color: #0056b3;
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 20px;
 }
 
 .table th, .table td {
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 12px;
+    text-align: left;
 }
 
 .table th {
-    background-color: #f2f2f2;
+    background-color: #f8f9fa;
+    font-weight: bold;
 }
 
 .table .revoked {
@@ -32,6 +108,37 @@
 }
 
 .table .connected {
-    color: #4caf50;
+    color: #28a745;
     font-weight: bold;
+}
+
+.table .actionButton {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.table .revokeButton {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.table .revokeButton:hover {
+    background-color: #ff4c4c;
+}
+
+.table .ratifyButton {
+    background-color: #4caf50;
+    color: white;
+}
+
+.table .ratifyButton:hover {
+    background-color: #45a049;
+}
+
+.connectedCell {
+    background-color: #d4edda;
 }

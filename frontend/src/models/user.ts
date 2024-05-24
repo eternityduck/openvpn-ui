@@ -5,5 +5,4 @@ export interface User {
     revoked: boolean;
     revocation_date: string | null;
     expiration_date: string | null;
-    // Add other user properties as needed
 }

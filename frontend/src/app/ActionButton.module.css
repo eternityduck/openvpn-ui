@@ -1,0 +1,36 @@
+.actionButton {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  margin-right: 5px;
+}
+
+.ratifyButton {
+  background-color: #4caf50;
+  color: white;
+}
+
+.ratifyButton:hover {
+  background-color: #45a049;
+}
+
+.revokeButton {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.revokeButton:hover {
+  background-color: #ff4c4c;
+}
+
+.downloadButton {
+  background-color: #007bff;
+  color: white;
+}
+
+.downloadButton:hover {
+  background-color: #0056b3;
+}
