@@ -242,11 +242,11 @@ bash zsh: venv
 #
 .PHONY: docker-build
 docker-build:
-	cd ./docker && docker compose build --no-cache
+	cd ../ && docker compose build --no-cache
 
 .PHONY: docker-up
 docker-up:
-	cd ./docker && docker compose up
+	cd ../ && docker compose up
 
 #
 # Commandline tools (wildcard rule, executable name must match package name)

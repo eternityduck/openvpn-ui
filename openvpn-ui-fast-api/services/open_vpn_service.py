@@ -8,6 +8,7 @@ from config import (
     OPENVPN_LISTEN_PORT,
     OPENVPN_PROTOCOL,
     OPENVPN_CCD_PATH,
+    OPENVPN_PASSWORD_AUTH,
 )
 import subprocess
 import json
@@ -15,8 +16,14 @@ import shutil
 import os
 
 from models.client import Client
+from models.group import Group
 from models.open_vpn_server import OpenVPNServer
 from models.openvpn_client_conf import OpenVPNClientConf
+from models.route import Route
+from models.user import User
+from repositories.group_repo import GroupRepository
+from repositories.route_repo import RouteRepository
+from repositories.user_repo import UserRepository
 from services.open_vpn_management_service import OpenVpnManagementService
 from utils.utils import (
     parse_index_txt,
@@ -30,26 +37,40 @@ from utils.utils import (
 
 class OpenVPNService:
 
-    def __init__(self, mgmt_service: OpenVpnManagementService):
+    def __init__(
+        self,
+        mgmt_service: OpenVpnManagementService,
+        user_repo: UserRepository,
+        group_repo: GroupRepository,
+        route_repo: RouteRepository,
+    ):
         self.mgmt_service = mgmt_service
+        self.user_repo = user_repo
+        self.group_repo = group_repo
+        self.route_repo = route_repo
 
-    def create_user(self, username) -> (bool, str):
-        if self.check_user_exist(username):
-            return False, f"User {username} already exists"
+    def create_user(self, user: User) -> (bool, str):
+        if self.check_user_exist(user.username):
+            return False, f"User {user.username} already exists"
 
         # TODO validate username
         subprocess.run(
-            f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch build-client-full {username} nopass",
+            f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch build-client-full {user.username} nopass",
             shell=True,
             check=True,
             text=True,
         )
 
-        return True, f"User {username} created"
+        self.user_repo.create_user(user)
+
+        return True, f"User {user.username} created"
 
     def revoke_user(self, username) -> (bool, str):
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
+
+        if self.user_repo.is_revoked(username):
+            return False, f"User {username} is already revoked"
 
         revoke_command = (
             f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch revoke {username}"
@@ -59,6 +80,8 @@ class OpenVPNService:
         gen_crl_command = f"cd {OPENVPN_EASYRSA_PATH} && easyrsa gen-crl"
         subprocess.run(gen_crl_command, shell=True, check=True, text=True)
         self.mgmt_service.kill_user(username)
+
+        self.user_repo.change_revocation_status(username)
 
         fix_crl_connections(OPENVPN_EASYRSA_PATH)
 
@@ -102,6 +125,7 @@ class OpenVPNService:
                 else:
                     return False, f"User {username} is not revoked"
 
+        self.user_repo.change_revocation_status(username)
         return True, f"User {username} ratified(un-revoked)"
 
     def delete_user(self, username) -> (bool, str):
@@ -134,6 +158,8 @@ class OpenVPNService:
         openvpn_client_conf.cert = file_reader(
             f"{OPENVPN_EASYRSA_PATH}/pki/issued/{username}.crt"
         )
+        if OPENVPN_PASSWORD_AUTH:
+            openvpn_client_conf.pass_auth = True
 
         obj_dict = json.loads(
             json.dumps(openvpn_client_conf, default=lambda o: o.__dict__)
@@ -188,15 +214,17 @@ class OpenVPNService:
         path = f"{OPENVPN_CCD_PATH}/groups/{groupname}"
         return os.path.exists(path)
 
-    def groups_list(self) -> list:
+    def groups_list(self) -> list[Group]:
         groups = []
         for group in os.listdir(f"{OPENVPN_CCD_PATH}/groups"):
-            groups.append(group)
+            groups.append(Group(name=group))
         return groups
 
     def create_group(self, groupname) -> (bool, str):
         if self.check_group_exist(groupname):
             return False, f"Group {groupname} already exists"
+
+        self.group_repo.create_group(groupname)
 
         os.makedirs(f"{OPENVPN_CCD_PATH}/groups", exist_ok=True)
 
@@ -212,6 +240,7 @@ class OpenVPNService:
 
         group_file_path = f"{OPENVPN_CCD_PATH}/groups/{groupname}"
         os.remove(group_file_path)
+        self.group_repo.delete_group(groupname)
 
         return True, f"Group {groupname} deleted"
 
@@ -226,19 +255,23 @@ class OpenVPNService:
 
         return True, f"User {username} added to group {groupname}"
 
-    def add_routes_to_group(self, groupname, routes):
+    def add_routes_to_group(self, groupname, routes: List[Route]):
         if not self.check_group_exist(groupname):
             return False, f"Group {groupname} does not exist"
 
+        self.route_repo.add_routes_to_group(
+            groupname, [(route.address, route.mask) for route in routes]
+        )
+
         routes_str = ""
         for route in routes:
-            routes_str += f'push "route {route}"\n'
+            routes_str += f'push "route {route.address} {route.mask}"\n'
         with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", "a") as group_file:
             group_file.write(routes_str)
 
-        return True, f"Routes {routes} added to group {groupname}"
+        return True, routes
 
-    def remove_routes_from_group(self, groupname, routes):
+    def remove_routes_from_group(self, groupname, routes: List[Route]):
         if not self.check_group_exist(groupname):
             return False, f"Group {groupname} does not exist"
 
@@ -246,13 +279,20 @@ class OpenVPNService:
             lines = group_file.readlines()
 
         for route in routes:
-            route_str = f'push "route {route}"\n'
+            route_str = f'push "route {route.address} {route.mask}"\n'
             lines = [line for line in lines if line != route_str]
 
         with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", "w") as group_file:
             group_file.writelines(lines)
 
-        return True, f"Route {routes} removed from group {groupname}"
+        try:
+            self.route_repo.remove_routes_grom_group(
+                groupname, [(route.address, route.mask) for route in routes]
+            )
+        except:
+            return False, f"Error removing routes from database"
+
+        return True, routes
 
     def remove_user_from_group(self, username, groupname):
         if not self.check_group_exist(groupname):
@@ -274,3 +314,19 @@ class OpenVPNService:
             return True, f"User {username} removed from group {groupname}"
         else:
             return False, f"User {username} is not a member of group {groupname}"
+
+    def get_users_for_group(self, groupname):
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+
+        users = []
+        for user_file in os.listdir(OPENVPN_CCD_PATH):
+            path = f"{OPENVPN_CCD_PATH}/{user_file}"
+            if os.path.isdir(path):
+                continue
+            with open(path, "r") as user:
+                lines = user.readlines()
+                if f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n" in lines:
+                    users.append(user_file)
+
+        return users
