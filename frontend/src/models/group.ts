@@ -1,3 +1,6 @@
+import { Route } from './route';
+
 export interface Group {
-  name: string;
+    name: string;
+    routes: Route[];
 }

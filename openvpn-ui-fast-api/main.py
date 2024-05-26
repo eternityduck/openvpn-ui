@@ -16,6 +16,7 @@ from models.group import Group
 from models.route import Route
 from apscheduler.schedulers.background import BackgroundScheduler
 from models.client import Client
+from utils.utils import (map_groups)
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -81,6 +82,9 @@ async def download_config(username: str):
 
 @app.post("/users")
 async def create_user(user: User, response: Response):
+    if user.username.strip() == "":
+        response.status_code = 400
+        return {"message": "Username cannot be empty"}
     result = openvpnService.create_user(user)
     response.status_code = 201 if result[0] else 400
     return {"message": result[1]}
@@ -102,6 +106,9 @@ async def ratify_user(username: str, response: Response):
 
 @app.post("/groups")
 async def create_group(group: Group, response: Response):
+    if group.name.strip() == "":
+        response.status_code = 400
+        return {"message": "Group name cannot be empty"}
     result = openvpnService.create_group(group.name)
     response.status_code = 201 if result[0] else 400
     return {"message": result[1]}
@@ -112,25 +119,18 @@ async def groups_list() -> List[Group]:
     return openvpnService.groups_list()
 
 
+@app.get("/groups/{groupname}")
+async def get_group_with_routes(groupname: str) -> Group:
+    result = groupRepo.get_group(groupname)
+    print(result)
+    return map_groups(result)[0]
+
+
 @app.get("/groupsfull")
 async def group_detail() -> List[Group]:
     result = groupRepo.get_groups_with_routes()
-    groups_dict = {}
-    for group, route in result:
-        if group.id not in groups_dict:
-            groups_dict[group.id] = {"name": group.name, "routes": []}
-        if route is not None:
-            groups_dict[group.id]["routes"].append(
-                Route(address=route.address, mask=route.mask)
-            )
-
-    groups_with_routes = []
-    for group_id, group_data in groups_dict.items():
-        groups_with_routes.append(
-            Group(name=group_data["name"], routes=group_data["routes"])
-        )
-
-    return groups_with_routes
+    print(result)
+    return map_groups(result)
 
 
 @app.get("/groups/{groupname}/users/{username}")
@@ -158,7 +158,7 @@ async def delete_group(groupname: str, response: Response):
 async def add_routes_group(groupname: str, routes: List[Route], response: Response):
     result = openvpnService.add_routes_to_group(groupname, routes)
     response.status_code = 201 if result[0] else 404
-    return {"message": result[1]}
+    return result[1]
 
 
 @app.delete("/groups/{groupname}/routes")
@@ -167,6 +167,10 @@ async def delete_routes_group(groupname: str, routes: List[Route], response: Res
     response.status_code = 200 if result[0] else 404
     return {"message": result[1]}
 
+
+@app.get("/groups/{groupname}/users")
+async def get_group_users(groupname: str) -> list:
+    return openvpnService.get_users_for_group(groupname)
 
 if __name__ == "__main__":
     import uvicorn

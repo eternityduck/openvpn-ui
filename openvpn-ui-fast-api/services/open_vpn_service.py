@@ -269,7 +269,7 @@ class OpenVPNService:
         with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", "a") as group_file:
             group_file.write(routes_str)
 
-        return True, f"Routes {routes} added to group {groupname}"
+        return True, routes
 
     def remove_routes_from_group(self, groupname, routes: List[Route]):
         if not self.check_group_exist(groupname):
@@ -285,7 +285,14 @@ class OpenVPNService:
         with open(f"{OPENVPN_CCD_PATH}/groups/{groupname}", "w") as group_file:
             group_file.writelines(lines)
 
-        return True, f"Route {routes} removed from group {groupname}"
+        try:
+            self.route_repo.remove_routes_grom_group(
+                groupname, [(route.address, route.mask) for route in routes]
+            )
+        except:
+            return False, f"Error removing routes from database"
+
+        return True, routes
 
     def remove_user_from_group(self, username, groupname):
         if not self.check_group_exist(groupname):
@@ -307,3 +314,19 @@ class OpenVPNService:
             return True, f"User {username} removed from group {groupname}"
         else:
             return False, f"User {username} is not a member of group {groupname}"
+
+    def get_users_for_group(self, groupname):
+        if not self.check_group_exist(groupname):
+            return False, f"Group {groupname} does not exist"
+
+        users = []
+        for user_file in os.listdir(OPENVPN_CCD_PATH):
+            path = f"{OPENVPN_CCD_PATH}/{user_file}"
+            if os.path.isdir(path):
+                continue
+            with open(path, "r") as user:
+                lines = user.readlines()
+                if f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n" in lines:
+                    users.append(user_file)
+
+        return users

@@ -30,9 +30,24 @@ class RouteRepository:
             .id
         )
         route_models = [
-            RouteModel(mask=route[0], address=route[1], group_id=group_id)
+            RouteModel(mask=route[1], address=route[0], group_id=group_id)
             for route in routes
         ]
         self.session.add_all(route_models)
+        self.session.commit()
+        self.session.close()
+
+    def remove_routes_grom_group(self, group_name, routes: List[Tuple[str, str]]):
+        group_id = (
+            self.session.exec(select(GroupModel).where(GroupModel.name == group_name))
+            .first()
+            .id
+        )
+        for route in routes:
+            route = select(RouteModel).where(RouteModel.address == route[0],
+                                             RouteModel.mask == route[1],
+                                             RouteModel.group_id == group_id)
+            result = self.session.exec(route).first()
+            self.session.delete(result)
         self.session.commit()
         self.session.close()

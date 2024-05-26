@@ -5,8 +5,11 @@ from typing import List
 from jinja2 import Environment, FileSystemLoader
 
 from config import OPENVPN_LISTEN_HOST, OPENVPN_LISTEN_PORT
+from models.group import Group
 from models.openvpn_client import OpenVpnClientStatus
 import bcrypt
+
+from models.route import Route
 
 
 # TODO add types
@@ -142,3 +145,21 @@ def check_password(password: str, hashed_password: str) -> bool:
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def map_groups(groups):
+    groups_dict = {}
+    for group, route in groups:
+        if group.id not in groups_dict:
+            groups_dict[group.id] = {"name": group.name, "routes": []}
+        if route is not None:
+            groups_dict[group.id]["routes"].append(
+                Route(address=route.address, mask=route.mask)
+            )
+
+    groups_with_routes = []
+    for group_id, group_data in groups_dict.items():
+        groups_with_routes.append(
+            Group(name=group_data["name"], routes=group_data["routes"])
+        )
+    return groups_with_routes

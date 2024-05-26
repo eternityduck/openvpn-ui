@@ -31,7 +31,7 @@ class OpenVpnManagementService:
         connection.close()
 
         self.active_clients = active_clients
-        print(self.active_clients)
+        print(f'Connected clients: {self.active_clients}')
 
         return self.active_clients
 
