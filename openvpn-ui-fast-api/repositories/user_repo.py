@@ -20,7 +20,9 @@ class UserRepository:
         self.session.close()
 
     def auth_user(self, user):
-        user_model = self.session.exec(select(UserModel).where(UserModel.username == user.username)).first()
+        user_model = self.session.exec(
+            select(UserModel).where(UserModel.username == user.username)
+        ).first()
         print(user_model)
         if user_model is None:
             return None
@@ -30,11 +32,15 @@ class UserRepository:
         return "Authorized"
 
     def change_revocation_status(self, username):
-        user_model = self.session.exec(select(UserModel).where(UserModel.username == username)).first()
+        user_model = self.session.exec(
+            select(UserModel).where(UserModel.username == username)
+        ).first()
         user_model.revoked = not user_model.revoked
         self.session.commit()
         self.session.close()
 
     def is_revoked(self, username):
-        user_model = self.session.exec(select(UserModel).where(UserModel.username == username)).first()
+        user_model = self.session.exec(
+            select(UserModel).where(UserModel.username == username)
+        ).first()
         return user_model.revoked

@@ -10,20 +10,18 @@ services:
     environment:
       OPENVPN_SERVER_NET: "192.168.100.0"
       OPENVPN_SERVER_MASK: "255.255.255.0"
-#      OPENVPN_PASSWORD_AUTH: "true"
+      OPENVPN_PASSWORD_AUTH: "true"
     cap_add:
       - NET_ADMIN
     ports:
       - "8000:1194"
-#      - "8080:8080"
     volumes:
       - ./easyrsa:/etc/openvpn/easyrsa
       - ./ccd:/etc/openvpn/ccd
-  openvpn-ui:
+  openvpn-ui-api:
     build:
       context: ./openvpn-ui-fast-api
-    image: openvpn-ui:test
-#    network_mode: service:openvpn
+    image: openvpn-ui-api:test
     ports:
       - "8080:8080"
     command: python3 /app/main.py
@@ -33,8 +31,18 @@ services:
       OPENVPN_CCD_PATH: "/opt/ccd"
       OPENVPN_LISTEN_HOST: "127.0.0.1"
       OPENVPN_LISTEN_PORT: 8000
-#      OPENVPN_PASSWORD_AUTH: "true"
+      OPENVPN_PASSWORD_AUTH: "true"
     volumes:
       - ./easyrsa:/opt/easyrsa
       - ./ccd:/opt/ccd
       - ./db:/opt/db
+#  openvpn-ui:
+#    build:
+#      context: ./frontend
+#    image: openvpn-ui:v0.1.0
+#    ports:
+#      - "3000:3000"
+#    environment:
+#      NEXT_PUBLIC_AUTH_PASS: "true"
+#      NEXT_PUBLIC_API_PORT: 8000
+#      NEXT_PUBLIC_API_HOST: "http://openvpn-ui-api"
