@@ -24,3 +24,4 @@ OPENVPN_MGMT_HOST = os.getenv("OPENVPN_MGMT_INTERFACE", "openvpn")
 OPENVPN_MGMT_PORT = try_parse_int(os.getenv("OPENVPN_MGMT_PASSWORD")) or 8989
 OPENVPN_PASSWORD_AUTH = os.getenv("OPENVPN_PASSWORD_AUTH", False) == "true"
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "/opt/db/openvpn-ui.db")
+OPENVPN_CCD_CONFIG_PATH = os.getenv("OPENVPN_CCD_CONFIG_PATH", "/etc/openvpn/ccd")

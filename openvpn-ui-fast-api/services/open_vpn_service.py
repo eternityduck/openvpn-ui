@@ -9,6 +9,7 @@ from config import (
     OPENVPN_PROTOCOL,
     OPENVPN_CCD_PATH,
     OPENVPN_PASSWORD_AUTH,
+    OPENVPN_CCD_CONFIG_PATH
 )
 import subprocess
 import json
@@ -32,6 +33,7 @@ from utils.utils import (
     fix_crl_connections,
     file_writer,
     generate_index_txt,
+    parse_easyrsa_date
 )
 
 
@@ -182,8 +184,8 @@ class OpenVPNService:
                     connected=True,
                     connected_since=is_active[1],
                     revoked=revoked,
-                    expiration_date=user["expiration_date"],
-                    revocation_date=user.get("revocation_date"),
+                    expiration_date=parse_easyrsa_date(user["expiration_date"]),
+                    revocation_date=parse_easyrsa_date(user["revocation_date"]) if user.get("revocation_date") else None,
                 )
             else:
                 client = Client(
@@ -191,8 +193,8 @@ class OpenVPNService:
                     connected=False,
                     connected_since=None,
                     revoked=revoked,
-                    expiration_date=user["expiration_date"],
-                    revocation_date=user.get("revocation_date"),
+                    expiration_date=parse_easyrsa_date(user["expiration_date"]),
+                    revocation_date=parse_easyrsa_date(user["revocation_date"]) if user.get("revocation_date") else None,
                 )
             clients.append(client)
 
@@ -251,7 +253,7 @@ class OpenVPNService:
             return False, f"User {username} does not exist"
 
         with open(f"{OPENVPN_CCD_PATH}/{username}", "a") as user_file:
-            user_file.write(f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n")
+            user_file.write(f"config {OPENVPN_CCD_CONFIG_PATH}/groups/{groupname}\n")
 
         return True, f"User {username} added to group {groupname}"
 
@@ -300,7 +302,7 @@ class OpenVPNService:
         if not self.check_user_exist(username):
             return False, f"User {username} does not exist"
 
-        line_to_remove = f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n"
+        line_to_remove = f"config {OPENVPN_CCD_CONFIG_PATH}/groups/{groupname}\n"
 
         with open(f"{OPENVPN_CCD_PATH}/{username}", "r") as user_file:
             lines = user_file.readlines()
@@ -326,7 +328,7 @@ class OpenVPNService:
                 continue
             with open(path, "r") as user:
                 lines = user.readlines()
-                if f"config {OPENVPN_CCD_PATH}/groups/{groupname}\n" in lines:
+                if f"config {OPENVPN_CCD_CONFIG_PATH}/groups/{groupname}\n" in lines:
                     users.append(user_file)
 
         return users

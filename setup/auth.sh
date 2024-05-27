@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 exec 2>> /tmp/debug-ovpn
 
 PATH=$PATH:/usr/local/bin

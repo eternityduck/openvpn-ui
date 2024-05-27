@@ -8,6 +8,7 @@ from config import OPENVPN_LISTEN_HOST, OPENVPN_LISTEN_PORT
 from models.group import Group
 from models.openvpn_client import OpenVpnClientStatus
 import bcrypt
+from datetime import datetime
 
 from models.route import Route
 
@@ -163,3 +164,14 @@ def map_groups(groups):
             Group(name=group_data["name"], routes=group_data["routes"])
         )
     return groups_with_routes
+
+
+def parse_easyrsa_date(date: str) -> str:
+    """
+    Parse the date from easyrsa to a human-readable format
+    """
+    date_time_obj = datetime.strptime(date, "%y%m%d%H%M%S%fZ")
+
+    human_readable_date = date_time_obj.strftime("%B %d, %Y, %I:%M:%S %p UTC")
+
+    return human_readable_date

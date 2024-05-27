@@ -10,7 +10,7 @@ services:
     environment:
       OPENVPN_SERVER_NET: "192.168.100.0"
       OPENVPN_SERVER_MASK: "255.255.255.0"
-      OPENVPN_PASSWORD_AUTH: "true"
+      OPENVPN_PASSWORD_AUTH:   "true"
     cap_add:
       - NET_ADMIN
     ports:
@@ -32,17 +32,18 @@ services:
       OPENVPN_LISTEN_HOST: "127.0.0.1"
       OPENVPN_LISTEN_PORT: 8000
       OPENVPN_PASSWORD_AUTH: "true"
+      OPENVPN_CCD_CONFIG_PATH: "/etc/openvpn/ccd"
     volumes:
       - ./easyrsa:/opt/easyrsa
       - ./ccd:/opt/ccd
       - ./db:/opt/db
-#  openvpn-ui:
-#    build:
-#      context: ./frontend
-#    image: openvpn-ui:v0.1.0
-#    ports:
-#      - "3000:3000"
-#    environment:
-#      NEXT_PUBLIC_AUTH_PASS: "true"
-#      NEXT_PUBLIC_API_PORT: 8000
-#      NEXT_PUBLIC_API_HOST: "http://openvpn-ui-api"
+  openvpn-ui:
+    build:
+      context: ./frontend
+    image: openvpn-ui:v0.1.0
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_AUTH_PASS: "true"
+      NEXT_PUBLIC_API_PORT: 8000
+      NEXT_PUBLIC_API_HOST: "http://openvpn-ui-api"
