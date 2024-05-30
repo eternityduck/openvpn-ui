@@ -16,7 +16,7 @@ from models.group import Group
 from models.route import Route
 from apscheduler.schedulers.background import BackgroundScheduler
 from models.client import Client
-from utils.utils import (map_groups)
+from utils.utils import map_groups
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -171,6 +171,7 @@ async def delete_routes_group(groupname: str, routes: List[Route], response: Res
 @app.get("/groups/{groupname}/users")
 async def get_group_users(groupname: str) -> list:
     return openvpnService.get_users_for_group(groupname)
+
 
 if __name__ == "__main__":
     import uvicorn

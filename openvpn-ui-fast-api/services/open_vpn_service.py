@@ -9,7 +9,7 @@ from config import (
     OPENVPN_PROTOCOL,
     OPENVPN_CCD_PATH,
     OPENVPN_PASSWORD_AUTH,
-    OPENVPN_CCD_CONFIG_PATH
+    OPENVPN_CCD_CONFIG_PATH,
 )
 import subprocess
 import json
@@ -33,7 +33,7 @@ from utils.utils import (
     fix_crl_connections,
     file_writer,
     generate_index_txt,
-    parse_easyrsa_date
+    parse_easyrsa_date,
 )
 
 
@@ -185,7 +185,11 @@ class OpenVPNService:
                     connected_since=is_active[1],
                     revoked=revoked,
                     expiration_date=parse_easyrsa_date(user["expiration_date"]),
-                    revocation_date=parse_easyrsa_date(user["revocation_date"]) if user.get("revocation_date") else None,
+                    revocation_date=(
+                        parse_easyrsa_date(user["revocation_date"])
+                        if user.get("revocation_date")
+                        else None
+                    ),
                 )
             else:
                 client = Client(
@@ -194,7 +198,11 @@ class OpenVPNService:
                     connected_since=None,
                     revoked=revoked,
                     expiration_date=parse_easyrsa_date(user["expiration_date"]),
-                    revocation_date=parse_easyrsa_date(user["revocation_date"]) if user.get("revocation_date") else None,
+                    revocation_date=(
+                        parse_easyrsa_date(user["revocation_date"])
+                        if user.get("revocation_date")
+                        else None
+                    ),
                 )
             clients.append(client)
 

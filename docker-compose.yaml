@@ -10,7 +10,7 @@ services:
     environment:
       OPENVPN_SERVER_NET: "192.168.100.0"
       OPENVPN_SERVER_MASK: "255.255.255.0"
-      OPENVPN_PASSWORD_AUTH:   "true"
+      OPENVPN_PASSWORD_AUTH: "true"
     cap_add:
       - NET_ADMIN
     ports:

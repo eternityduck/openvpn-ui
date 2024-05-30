@@ -34,5 +34,7 @@ class GroupRepository:
 
     def get_group(self, group_name):
         return self.session.exec(
-            select(GroupModel, RouteModel).where(GroupModel.name == group_name).join(RouteModel, isouter=True)
+            select(GroupModel, RouteModel)
+            .where(GroupModel.name == group_name)
+            .join(RouteModel, isouter=True)
         ).all()

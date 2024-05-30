@@ -44,9 +44,11 @@ class RouteRepository:
             .id
         )
         for route in routes:
-            route = select(RouteModel).where(RouteModel.address == route[0],
-                                             RouteModel.mask == route[1],
-                                             RouteModel.group_id == group_id)
+            route = select(RouteModel).where(
+                RouteModel.address == route[0],
+                RouteModel.mask == route[1],
+                RouteModel.group_id == group_id,
+            )
             result = self.session.exec(route).first()
             self.session.delete(result)
         self.session.commit()
