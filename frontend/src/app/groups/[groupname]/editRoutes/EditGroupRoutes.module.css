@@ -1,4 +1,3 @@
-/* Styles for the UserListPage container */
 .container {
     font-family: Arial, sans-serif;
     background-color: #f5f7fa;
@@ -8,7 +7,6 @@
     padding: 20px;
 }
 
-/* Table Styles */
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -36,7 +34,6 @@
     background-color: #f1f1f1;
 }
 
-/* Button Styles */
 .button {
     padding: 10px 20px;
     margin: 5px;
@@ -61,7 +58,6 @@
     background-color: #c82333;
 }
 
-/* Form Styles */
 .addRouteForm {
     max-width: 500px;
     margin: 0 auto;
@@ -100,7 +96,6 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Go Back Button Styles */
 .goBackButton {
     display: inline-block;
     margin-bottom: 20px;

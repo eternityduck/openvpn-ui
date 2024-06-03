@@ -22,7 +22,6 @@ const UserListPage: React.FC = () => {
 
     const passwordAuth = process.env.NEXT_PUBLIC_AUTH_PASS === 'true';
     useEffect(() => {
-        console.log(passwordAuth);
         const fetchData = async () => {
             try {
                 const data = await apiService.getUsers();
