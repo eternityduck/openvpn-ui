@@ -14,8 +14,6 @@ const UserListPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [showForm, setShowForm] = useState<boolean>(false);
-    const [success, setSuccess] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>('');
 
     const router = useRouter();
@@ -67,7 +65,7 @@ const UserListPage: React.FC = () => {
         const existingUser = users.find((user) => user.username === username);
         if (existingUser) {
             setErrorMessage('User already exists!');
-            setTimeout(() => setErrorMessage(null), 3000); // Hide error message after 3 seconds
+            setTimeout(() => setErrorMessage(null), 6000);
             return;
         }
 
@@ -87,10 +85,6 @@ const UserListPage: React.FC = () => {
     if (error) {
         return <div>Error: {error}</div>;
     }
-
-    const toggleForm = () => {
-        setShowForm(!showForm);
-    };
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);

@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile.openvpn
     image: openvpn:test
     command: /etc/openvpn/setup/bootstrap.sh
+    networks:
+      - openvpn-ui-network
     environment:
       OPENVPN_SERVER_NET: "192.168.100.0"
       OPENVPN_SERVER_MASK: "255.255.255.0"
@@ -25,6 +27,8 @@ services:
     ports:
       - "8080:8080"
     command: python3 /app/main.py
+    networks:
+      - openvpn-ui-network
     environment:
       OPENVPN_EASYRSA_PATH: "/opt/easyrsa"
       OPENVPN_INDEX_TXT_PATH: "/opt/easyrsa/pki/index.txt"
@@ -40,10 +44,22 @@ services:
   openvpn-ui:
     build:
       context: ./frontend
+      args:
+        NEXT_PUBLIC_API_HOST: http://localhost
+        NEXT_PUBLIC_API_PORT: 8080
+        NEXT_PUBLIC_AUTH_PASS: true
     image: openvpn-ui:v0.1.0
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_AUTH_PASS: "true"
-      NEXT_PUBLIC_API_PORT: 8000
-      NEXT_PUBLIC_API_HOST: "http://openvpn-ui-api"
+    networks:
+      - openvpn-ui-network
+    # As we are building the static client side app we cannot pass the environment variables
+#    environment:
+#      NEXT_PUBLIC_AUTH_PASS: "true"
+#      NEXT_PUBLIC_API_PORT: 8000
+#      NEXT_PUBLIC_API_HOST: "http://openvpn-ui-api"
+
+
+networks:
+  openvpn-ui-network:
+    driver: bridge

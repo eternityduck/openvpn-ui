@@ -55,7 +55,6 @@ class OpenVPNService:
         if self.check_user_exist(user.username):
             return False, f"User {user.username} already exists"
 
-        # TODO validate username
         subprocess.run(
             f"cd {OPENVPN_EASYRSA_PATH} && easyrsa --batch build-client-full {user.username} nopass",
             shell=True,
