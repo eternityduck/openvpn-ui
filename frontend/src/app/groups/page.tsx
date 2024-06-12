@@ -20,10 +20,6 @@ const GroupsPage = () => {
         console.log(groups);
     }, [apiService]);
 
-    const handleShowGroup = (groupName: string) => {
-        router.push(`/groups/${groupName}`);
-    };
-
     const handleDeleteGroup = async (groupName: string) => {
         await apiService.deleteGroup(groupName);
         setGroups(groups.filter((group) => group.name !== groupName));
